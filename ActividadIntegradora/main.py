@@ -151,7 +151,7 @@ class AlmacenModel(Model):
         return sum([agent.movements for agent in self.schedule.agents if isinstance(agent, RobotAgent)])
 
 # Ruta al archivo con espacio de configuracion
-file_path = 'D:/Tec/Multiagentes y gráficos/Robots/ActividadIntegradora/input1.txt'  # Cambia esto por la ruta real de tu archivo
+file_path = '../Robots/ActividadIntegradora/input1.txt'  # Cambia esto por la ruta real de tu archivo
 
 # Leer espacio de configuracion
 width, height, workspace = read_workspace(file_path)
