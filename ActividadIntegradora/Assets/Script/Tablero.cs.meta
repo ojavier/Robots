@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: df784d44825ac6e46af6f4a05634e0ad
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - floorPrefab: {fileID: 8102562242214355257, guid: 39ca1233b3fb1b041b612c7d77b3eb22, type: 3}
+  - wallPrefab: {fileID: 5403763337176804286, guid: 8a518f820016ff240af1d556e99ac99c, type: 3}
+  - binPrefab: {fileID: 3783937035477577939, guid: f3a67362e525c714c8197c54e98853e4, type: 3}
+  - trashPrefab: {fileID: 4510386512708219887, guid: ac2fef18bf83d8e4bac4339260deda85, type: 3}
+  - robotPrefab: {fileID: 6734496040658306171, guid: a8e844a132914774fa6f0412d9d4c9a9, type: 3}
+  - mapLoader: {instanceID: 0}
+  executionOrder: 200
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
