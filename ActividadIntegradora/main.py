@@ -179,6 +179,14 @@ class OficinaModel(Model):
                 print(f"Respuesta del servidor: {response.text}")
             except requests.exceptions.RequestException as e:
                 print(f"Error al enviar datos al servidor: {e}")
+                # Implementar reintentos si es necesario
+                for i in range(3):
+                    try:
+                        response = requests.post("http://localhost:8585", json=last_grid_state)
+                        print(f"Reintento {i+1}: Respuesta del servidor: {response.text}")
+                        break
+                    except requests.exceptions.RequestException as e:
+                        print(f"Reintento {i+1} falló: {e}")
 
 # Ruta al archivo con espacio de configuración
 file_path = '../Robots/ActividadIntegradora/input1.txt'  # Cambia esto por la ruta real de tu archivo
@@ -187,7 +195,7 @@ file_path = '../Robots/ActividadIntegradora/input1.txt'  # Cambia esto por la ru
 width, height, workspace = read_workspace(file_path)
 
 # Inicializar y correr el modelo
-model = AlmacenModel(width, height, 5, workspace)
+model = OficinaModel(width, height, 5, workspace)
 start_time = time.time()
 for i in range(1000):
     model.step()
