@@ -185,10 +185,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   floorPrefab: {fileID: 8102562242214355257, guid: 39ca1233b3fb1b041b612c7d77b3eb22, type: 3}
-  wallPrefab: {fileID: 5403763337176804286, guid: 8a518f820016ff240af1d556e99ac99c, type: 3}
   binPrefab: {fileID: 3783937035477577939, guid: f3a67362e525c714c8197c54e98853e4, type: 3}
-  trashPrefab: {fileID: 4510386512708219887, guid: ac2fef18bf83d8e4bac4339260deda85, type: 3}
+  trashPrefab1: {fileID: 6852792633061828203, guid: 5b6b3f0f64b78ad49892eccd2ad69d2f, type: 3}
+  trashPrefab2: {fileID: 5453187386048156356, guid: 5c445acb546c38f489b9d15138b7e927, type: 3}
+  trashPrefab3: {fileID: 7734667950392114833, guid: b0fd56c152e32c54e90eb18f853c7584, type: 3}
+  MoreTrash: {fileID: 9155274760834558189, guid: 0688636e26264134db2c78ef8aa347b1, type: 3}
   robotPrefab: {fileID: 6734496040658306171, guid: a8e844a132914774fa6f0412d9d4c9a9, type: 3}
+  mapLoader: {fileID: 0}
+  obstaclePrefabs:
+  - {fileID: 8065588209684969873, guid: 676a2e08ef8051544ba177fee1a8ddc2, type: 3}
+  - {fileID: 5528265310961836530, guid: 2438069d00342fe4f810f315ea948f13, type: 3}
+  - {fileID: 2106749554724343191, guid: db2ee45675c658447aa8e1236fb609b0, type: 3}
+  - {fileID: 5403763337176804286, guid: 8a518f820016ff240af1d556e99ac99c, type: 3}
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -368,13 +376,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.5, y: 0.5, z: -0.5, w: 0.5}
-  m_LocalPosition: {x: 8, y: 40, z: 0}
+  m_LocalRotation: {x: 0.4313855, y: 0.0023211222, z: 0.0016229276, w: 0.90216327}
+  m_LocalPosition: {x: 9.21, y: 32.75, z: -48.87}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 90, y: 90, z: 0}
+  m_LocalEulerAnglesHint: {x: 51.11, y: 0.51, z: 0.45}
 --- !u!850595691 &1174854928
 LightingSettings:
   m_ObjectHideFlags: 0
