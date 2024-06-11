@@ -8,29 +8,35 @@ import random
 import time
 import json
 
+
 # Función para leer el archivo de configuración del espacio de trabajo
 def read_workspace(file_path):
     try:
         with open(file_path, 'r') as file:
             lines = file.readlines()
 
+
         # Leer dimensiones
         n, m = map(int, lines[0].strip().split())
+
 
         # Crear la matriz de la oficina
         workspace = []
         for line in lines[1:]:
             workspace.append(line.strip().split())
 
+
         return n, m, np.array(workspace)
     except FileNotFoundError:
         print(f"Error: El archivo '{file_path}' no se encontró. Verifica la ruta del archivo.")
         raise
 
+
 class TrashAgent(Agent):
     def __init__(self, unique_id, model, trash_amount):
         super().__init__(unique_id, model)
         self.trash_amount = trash_amount
+
 
 class RobotAgent(Agent):
     def __init__(self, unique_id, model, trash_capacity=5):
@@ -44,6 +50,7 @@ class RobotAgent(Agent):
             if 'P' in cell_content:
                 self.trash_bin_location = coord
 
+
     def step(self):
         print(f"Robot {self.unique_id} en posición {self.pos} con {self.current_trash}/{self.trash_capacity} de basura.")
         if self.current_trash >= self.trash_capacity:
@@ -51,12 +58,14 @@ class RobotAgent(Agent):
         else:
             self.clean_or_move()
 
+
     def move_to_trash_bin(self):
         print(f"Robot {self.unique_id} moviéndose al contenedor de basura desde {self.pos}")
         self.move_towards(self.trash_bin_location)
         if self.pos == self.trash_bin_location:
             self.current_trash = 0
             print(f"Robot {self.unique_id} ha vaciado su basura.")
+
 
     def clean_or_move(self):
         cell_contents = self.model.grid.get_cell_list_contents([self.pos])
@@ -66,6 +75,7 @@ class RobotAgent(Agent):
             self.clean_trash(trash_agents[0])
         else:
             self.move()
+
 
     def clean_trash(self, trash_agent):
         if trash_agent.trash_amount > 0:
@@ -77,6 +87,7 @@ class RobotAgent(Agent):
                 self.model.grid.remove_agent(trash_agent)
                 print(f"Basura en {self.pos} ha sido completamente limpiada.")
 
+
     def move(self):
         possible_steps = self.model.grid.get_neighborhood(self.pos, moore=True, include_center=False)
         possible_steps = [step for step in possible_steps if not any(isinstance(obj, str) and obj == 'X' for obj in self.model.grid.get_cell_list_contents([step]))]
@@ -85,6 +96,7 @@ class RobotAgent(Agent):
             self.model.grid.move_agent(self, new_position)
             self.movements += 1
             print(f"Robot {self.unique_id} se movió a {new_position}")
+
 
     def move_towards(self, destination):
         if self.pos == destination:
@@ -102,6 +114,7 @@ class RobotAgent(Agent):
             self.model.grid.move_agent(self, best_step)
             self.movements += 1
             print(f"Robot {self.unique_id} moviéndose hacia {best_step} en dirección al contenedor")
+
 
 class OficinaModel(Model):
     def __init__(self, width, height, num_robots, workspace):
@@ -121,17 +134,23 @@ class OficinaModel(Model):
             for x in range(width):
                 if y < len(workspace) and x < len(workspace[y]):
                     cell = workspace[y, x]
-                    if cell == 'S':  # Consider 'S' as the start position for robots
-                        r = RobotAgent(agent_id, self)
-                        self.schedule.add(r)
-                        self.grid.place_agent(r, (x, y))
-                        agent_id += 1
-                    elif cell.isdigit():
+                    if cell.isdigit():
                         trash_amount = int(cell)
                         trash_agent = TrashAgent(agent_id, self, trash_amount)
                         self.schedule.add(trash_agent)
                         self.grid.place_agent(trash_agent, (x, y))
                         agent_id += 1
+                    elif cell == 'P':
+                        self.trash_bin_location = (x, y)
+
+        # Create robots at random positions
+        for i in range(num_robots):
+            r = RobotAgent(agent_id, self)
+            self.schedule.add(r)
+            x = self.random.randrange(self.grid.width)
+            y = self.random.randrange(self.grid.height)
+            self.grid.place_agent(r, (x, y))
+            agent_id += 1
 
     def step(self):
         self.schedule.step()
@@ -149,7 +168,7 @@ class OficinaModel(Model):
         return True
 
     def record_grid(self):
-        grid_data = np.zeros((self.grid.width, self.grid.height))
+        grid_data = np.zeros((self.grid.height, self.grid.width))  # Asegúrate de invertir las dimensiones
         for cell in self.grid.coord_iter():
             cell_content, coord = cell
             x, y = coord
@@ -197,7 +216,7 @@ width, height, workspace = read_workspace(file_path)
 # Inicializar y correr el modelo
 model = OficinaModel(width, height, 5, workspace)
 start_time = time.time()
-for i in range(1000):
+for i in range(1000):  # Limitar a 1000 pasos o hasta que se limpie toda la basura
     model.step()
     if model.check_clean():
         break
