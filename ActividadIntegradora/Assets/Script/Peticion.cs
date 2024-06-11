@@ -45,7 +45,7 @@ public class Peticion : MonoBehaviour
                 else
                 {
                     // Verificar la respuesta del servidor
-                    Debug.Log("Respuesta del servidor: " + www.downloadHandler.text);
+                    // Debug.Log("Respuesta del servidor: " + www.downloadHandler.text);
 
                     // Parsear la respuesta JSON si es válida
                     try

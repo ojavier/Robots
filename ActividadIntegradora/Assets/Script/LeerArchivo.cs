@@ -18,7 +18,6 @@ public class LeerArchivo : MonoBehaviour {
     }
 
     void Leer(string filePath) {
-        Debug.Log("Cargando el mapa desde " + filePath);
         string[] lines = File.ReadAllLines(filePath);
         string[] dimensions = lines[0].Split(' ');
         height = int.Parse(dimensions[0]);
