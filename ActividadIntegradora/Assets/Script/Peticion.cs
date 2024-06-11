@@ -2,7 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Networking;
 
-public class SendJsonToServer : MonoBehaviour
+public class Peticion : MonoBehaviour
 {
     [System.Serializable]
     public class GridData
@@ -53,7 +53,19 @@ public class SendJsonToServer : MonoBehaviour
             }
             else
             {
+                // Verificar la respuesta del servidor
                 Debug.Log("Respuesta del servidor: " + www.downloadHandler.text);
+
+                // Parsear la respuesta JSON si es válida
+                try
+                {
+                    GridData response = JsonUtility.FromJson<GridData>(www.downloadHandler.text);
+                    Debug.Log("Datos recibidos: paso = " + response.step);
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogError("Error al parsear JSON: " + e.Message);
+                }
             }
         }
     }
