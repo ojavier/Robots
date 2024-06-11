@@ -11,39 +11,24 @@ public class Peticion : MonoBehaviour
         public int[][] grid;
     }
 
+    public GameObject robotPrefab; // Prefab del robot
+    private GameObject[] robots; // Array de robots
+    private int gridSizeX = 3; // Ancho del grid (ajustar según sea necesario)
+    private int gridSizeY = 3; // Alto del grid (ajustar según sea necesario)
+
     void Start()
     {
-        // Datos a enviar
-        GridData data = new GridData
-        {
-            step = 1,
-            grid = new int[][]
-            {
-                new int[] { 0, 0, 8 },
-                new int[] { 0, 3, 0 },
-                new int[] { 2, 0, 0 }
-            }
-        };
-
-        // Convertir los datos a JSON
-        string jsonData = JsonUtility.ToJson(data);
-
-        // Iniciar la corrutina para enviar los datos
-        StartCoroutine(SendData(jsonData));
+        // Iniciar la corrutina para recibir los datos
+        StartCoroutine(ReceiveData());
     }
 
-    IEnumerator SendData(string jsonData)
+    IEnumerator ReceiveData()
     {
         string url = "http://localhost:8585";
 
-        // Crear una solicitud POST
-        using (UnityWebRequest www = UnityWebRequest.Post(url, ""))
+        // Crear una solicitud GET
+        using (UnityWebRequest www = UnityWebRequest.Get(url))
         {
-            byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(jsonData);
-            www.uploadHandler = (UploadHandler)new UploadHandlerRaw(bodyRaw);
-            www.downloadHandler = (DownloadHandler)new DownloadHandlerBuffer();
-            www.SetRequestHeader("Content-Type", "application/json");
-
             // Enviar la solicitud y esperar la respuesta
             yield return www.SendWebRequest();
 
@@ -61,10 +46,53 @@ public class Peticion : MonoBehaviour
                 {
                     GridData response = JsonUtility.FromJson<GridData>(www.downloadHandler.text);
                     Debug.Log("Datos recibidos: paso = " + response.step);
+
+                    // Actualizar la matriz y los robots
+                    UpdateRobots(response.grid);
                 }
                 catch (System.Exception e)
                 {
                     Debug.LogError("Error al parsear JSON: " + e.Message);
+                }
+            }
+        }
+    }
+
+    void UpdateRobots(int[][] grid)
+    {
+        // Inicializar robots si no se han creado aún
+        if (robots == null)
+        {
+            robots = new GameObject[gridSizeX * gridSizeY];
+            for (int y = 0; y < gridSizeY; y++)
+            {
+                for (int x = 0; x < gridSizeX; x++)
+                {
+                    int index = y * gridSizeX + x;
+                    if (grid[y][x] == 8) // Suponiendo que 8 representa un robot
+                    {
+                        robots[index] = Instantiate(robotPrefab, new Vector3(x, 0, y), Quaternion.identity);
+                    }
+                }
+            }
+        }
+
+        // Actualizar posiciones de robots
+        for (int y = 0; y < gridSizeY; y++)
+        {
+            for (int x = 0; x < gridSizeX; x++)
+            {
+                int index = y * gridSizeX + x;
+                if (grid[y][x] == 8) // Suponiendo que 8 representa un robot
+                {
+                    if (robots[index] != null)
+                    {
+                        robots[index].transform.position = new Vector3(x, 0, y);
+                    }
+                    else
+                    {
+                        robots[index] = Instantiate(robotPrefab, new Vector3(x, 0, y), Quaternion.identity);
+                    }
                 }
             }
         }
