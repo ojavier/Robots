@@ -1,6 +1,7 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import logging
 import json
+from urllib.parse import urlparse
 
 class Server(BaseHTTPRequestHandler):
     
@@ -10,28 +11,51 @@ class Server(BaseHTTPRequestHandler):
         self.end_headers()
         
     def do_GET(self):
-        # Construye el objeto de posición
-        position = {
-            "x": 1,
-            "y": 2,
-            "z": 3
+        parsed_path = urlparse(self.path)
+        path = parsed_path.path
+
+        if path == '/steps':
+            self.handle_steps()
+        elif path.startswith('/default/'):
+            self.handle_default(path)
+        else:
+            self.handle_not_found()
+
+    def handle_steps(self):
+        #steps es un entero
+        steps = 5
+        stepCount = {
+            "data": steps
         }
-
-        # Envía la respuesta como JSON
         self._set_response()
-        self.wfile.write(json.dumps(position).encode('utf-8'))
+        self.wfile.write(json.dumps(stepCount).encode('utf-8'))
+        
+    def handle_default(self, path):
+        parts = path.split('/')
+        if len(parts) < 3 or not parts[2]:
+            self._set_response(400)
+            response = {
+                "error": "Missing 'id' parameter in URL"
+            }
+        else:
+            id = parts[2]
+            datosSteps = []
+            #[[5, 0, 0], [1, 0, 0], [0, 0, 1], [1, 0, 1], [-1, 0, 0]]
+            
+            position = {
+                "data": datosSteps[id]
+            }
+            self._set_response()
+            response = position
+        
+        self.wfile.write(json.dumps(response).encode('utf-8'))
 
-    def do_POST(self):
-        # Construye el objeto de posición
-        position = {
-            "x" : 1,
-            "y" : 2,
-            "z" : 3
+    def handle_not_found(self):
+        self._set_response(404)
+        response = {
+            "error": "Not found"
         }
-
-        # Envía la respuesta como JSON
-        self._set_response()
-        self.wfile.write(json.dumps(position).encode('utf-8'))
+        self.wfile.write(json.dumps(response).encode('utf-8'))
 
 def run(server_class=HTTPServer, handler_class=Server, port=8585):
     logging.basicConfig(level=logging.INFO)
