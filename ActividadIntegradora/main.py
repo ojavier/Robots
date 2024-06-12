@@ -75,7 +75,8 @@ class RobotAgent(Agent):
 class OficinaModel(Model):
     def __init__(self, workspace_file):
         super().__init__()
-        self.num_robots = 5  # Siempre habrá 5 robots
+        self.num_robots = 5
+        self.total_steps = 0  # Inicializa el contador de pasos
 
         # Leer configuración del espacio de trabajo desde el archivo
         self.height, self.width, self.workspace = read_workspace(workspace_file)
@@ -88,11 +89,11 @@ class OficinaModel(Model):
         )
         self.grid_history = []
         self.trash_bin_location = None
-        self.trash_map = {}  # Diccionario para almacenar la cantidad de basura en cada celda
+        self.trash_map = {}
 
         agent_id = 0
-        robot_count = 0  # Contador de robots creados
-        robot_positions = []  # Lista para rastrear posiciones de robots
+        robot_count = 0
+        robot_positions = []
 
         for y in range(self.height):
             for x in range(self.width):
@@ -117,25 +118,32 @@ class OficinaModel(Model):
                         else:
                             raise ValueError("More than 5 starting positions ('S') for robots.")
 
-        # Comprobar si los robots están encimados en la posición inicial
         if len(robot_positions) != len(set(robot_positions)):
             raise ValueError("Robots are overlapping in initial positions.")
 
-        for _ in range(self.num_robots):  
+        for _ in range(self.num_robots):
             robot = RobotAgent(agent_id, self)
             self.schedule.add(robot)
             empty_pos = self.find_empty()
-            print(empty_pos)
-            if self.grid is None:
-                self.grid = MultiGrid(self.width, self.height, True)
             self.grid.place_agent(robot, empty_pos)
             agent_id += 1
 
-    def find_empty(self):
-        while True:
-            pos = (random.randrange(self.width), random.randrange(self.height))
-            if self.grid is not None and self.grid.is_cell_empty(pos):
-                return pos
+    def step(self):
+        print("Ejecutando paso del modelo...")  # Agregado este print
+        self.schedule.step()
+        self.record_grid()
+        self.datacollector.collect(self)
+        self.total_steps += 1  # Incrementa el contador de pasos
+
+        # Enviar datos de robots al servidor
+        robot_data = self.collect_robot_data()
+        data = {
+            'time_step': self.schedule.time,
+            'robots': robot_data
+        }
+        print(data)
+        robotsData.append(data['robots'])
+        print(f"Número total de pasos de simulación realizados: {self.total_steps}")  # Agregado este print
 
     def collect_robot_data(self):
         robot_data = []
@@ -148,6 +156,19 @@ class OficinaModel(Model):
                     'movements': agent.movements
                 })
         return robot_data
+
+    def find_empty(self):
+        empty_cells = list(self.grid.empties)
+        if not empty_cells:
+            raise ValueError("No empty positions available in the grid.")
+        return random.choice(empty_cells)
+    
+    def check_clean(self):
+        for cell in self.grid.coord_iter():
+            cell_content, coord = cell
+            if any(isinstance(obj, TrashAgent) for obj in cell_content):
+                return False
+        return True
 
     def record_grid(self):
         grid_data = []
@@ -166,34 +187,13 @@ class OficinaModel(Model):
             grid_data.append(row)
         self.grid_history.append(grid_data)
 
-    def step(self):
-        self.schedule.step()
-        self.record_grid()
-        self.datacollector.collect(self)
-        print("Se ha ejecutado un paso del modelo.")
-
-            # Send robot data to the server
-        robot_data = self.collect_robot_data()
-        data = {
-            'time_step': self.schedule.time,
-            'robots': robot_data
-        }
-        print(data)
-        robotsData.append(data.robots)
-
-    def check_clean(self):
-        for cell in self.grid.coord_iter():
-            cell_content, coord = cell
-            if any(isinstance(obj, TrashAgent) for obj in cell_content):
-                return False
-        return True
-
     def total_movements(self):
         total = 0
         for agent in self.schedule.agents:
             if isinstance(agent, RobotAgent):
                 total += agent.movements
         return total
+
 
 def read_workspace(file_path):
     with open(file_path, 'r') as file:
@@ -210,18 +210,16 @@ def read_workspace(file_path):
 # Ruta al archivo con espacio de configuración
 file_path = '../Robots/ActividadIntegradora/input1.txt'  # Cambia esto por la ruta real de tu archivo
 
-# Leer espacio de configuración
-width, height, workspace = read_workspace(file_path)
-
 # Inicializar y correr el modelo
+robotsData = []  # Define la lista para almacenar datos de robots
 model = OficinaModel(file_path)
 
 # Ejecutar el modelo hasta que esté limpio
-while not model.check_clean():
+while model.total_steps == 0 or not model.check_clean():
+    print("Ejecutando paso del modelo...")  # Agregado este print
     model.step()
 
-# Obtener el número total de pasos de simulación realizados
-total_steps = model.schedule.steps
-
 print("La simulación ha terminado.")
-print(f"Número total de pasos de simulación realizados: {total_steps}")
+print(f"Número total de pasos de simulación realizados: {model.total_steps}")
+
+print(f"El valor devuelto por model.check_clean() es: {model.check_clean()}")

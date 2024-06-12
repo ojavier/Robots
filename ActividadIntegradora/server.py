@@ -11,12 +11,9 @@ from mesa.datacollection import DataCollector
 import numpy as np
 import random
 import time
-import json
 
 robotsData = []
-total_steps = 0
 
-# Función para leer el archivo de configuración del espacio de trabajo
 class TrashAgent(Agent):
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
@@ -81,7 +78,8 @@ class RobotAgent(Agent):
 class OficinaModel(Model):
     def __init__(self, workspace_file):
         super().__init__()
-        self.num_robots = 5  # Siempre habrá 5 robots
+        self.num_robots = 5
+        self.total_steps = 0  # Inicializa el contador de pasos
 
         # Leer configuración del espacio de trabajo desde el archivo
         self.height, self.width, self.workspace = read_workspace(workspace_file)
@@ -94,11 +92,11 @@ class OficinaModel(Model):
         )
         self.grid_history = []
         self.trash_bin_location = None
-        self.trash_map = {}  # Diccionario para almacenar la cantidad de basura en cada celda
+        self.trash_map = {}
 
         agent_id = 0
-        robot_count = 0  # Contador de robots creados
-        robot_positions = []  # Lista para rastrear posiciones de robots
+        robot_count = 0
+        robot_positions = []
 
         for y in range(self.height):
             for x in range(self.width):
@@ -123,25 +121,32 @@ class OficinaModel(Model):
                         else:
                             raise ValueError("More than 5 starting positions ('S') for robots.")
 
-        # Comprobar si los robots están encimados en la posición inicial
         if len(robot_positions) != len(set(robot_positions)):
             raise ValueError("Robots are overlapping in initial positions.")
 
-        for _ in range(self.num_robots):  
+        for _ in range(self.num_robots):
             robot = RobotAgent(agent_id, self)
             self.schedule.add(robot)
             empty_pos = self.find_empty()
-            print(empty_pos)
-            if self.grid is None:
-                self.grid = MultiGrid(self.width, self.height, True)
             self.grid.place_agent(robot, empty_pos)
             agent_id += 1
 
-    def find_empty(self):
-        while True:
-            pos = (random.randrange(self.width), random.randrange(self.height))
-            if self.grid is not None and self.grid.is_cell_empty(pos):
-                return pos
+    def step(self):
+        print("Ejecutando paso del modelo...")  # Agregado este print
+        self.schedule.step()
+        self.record_grid()
+        self.datacollector.collect(self)
+        self.total_steps += 1  # Incrementa el contador de pasos
+
+        # Enviar datos de robots al servidor
+        robot_data = self.collect_robot_data()
+        data = {
+            'time_step': self.schedule.time,
+            'robots': robot_data
+        }
+        print(data)
+        robotsData.append(data['robots'])
+        print(f"Número total de pasos de simulación realizados: {self.total_steps}")  # Agregado este print
 
     def collect_robot_data(self):
         robot_data = []
@@ -154,6 +159,19 @@ class OficinaModel(Model):
                     'movements': agent.movements
                 })
         return robot_data
+
+    def find_empty(self):
+        empty_cells = list(self.grid.empties)
+        if not empty_cells:
+            raise ValueError("No empty positions available in the grid.")
+        return random.choice(empty_cells)
+    
+    def check_clean(self):
+        for cell in self.grid.coord_iter():
+            cell_content, coord = cell
+            if any(isinstance(obj, TrashAgent) for obj in cell_content):
+                return False
+        return True
 
     def record_grid(self):
         grid_data = []
@@ -172,28 +190,6 @@ class OficinaModel(Model):
             grid_data.append(row)
         self.grid_history.append(grid_data)
 
-    def step(self):
-        self.schedule.step()
-        self.record_grid()
-        self.datacollector.collect(self)
-        print("Se ha ejecutado un paso del modelo.")
-
-            # Send robot data to the server
-        robot_data = self.collect_robot_data()
-        data = {
-            'time_step': self.schedule.time,
-            'robots': robot_data
-        }
-        print(data)
-        robotsData.append(data.robots)
-
-    def check_clean(self):
-        for cell in self.grid.coord_iter():
-            cell_content, coord = cell
-            if any(isinstance(obj, TrashAgent) for obj in cell_content):
-                return False
-        return True
-
     def total_movements(self):
         total = 0
         for agent in self.schedule.agents:
@@ -209,37 +205,35 @@ def read_workspace(file_path):
         for i in range(1, n + 1):
             row = lines[i].strip().split()
             for j in range(len(row)):
-                trash_map[row[j]] = (j, i - 1)
+                trash_map[(j, i - 1)] = row[j]  # Asegúrate de que las coordenadas sean correctas
         return n, m, trash_map
 
-
-# Ruta al archivo con espacio de configuración
-file_path = '../Robots/ActividadIntegradora/input1.txt'  # Cambia esto por la ruta real de tu archivo
-
 def execAgent():
-    global total_steps
+    global robotsData
     # Leer espacio de configuración
+    file_path = '../Robots/ActividadIntegradora/input1.txt'
     width, height, workspace = read_workspace(file_path)
 
     # Inicializar y correr el modelo
     model = OficinaModel(file_path)
 
     # Ejecutar el modelo hasta que esté limpio
-    while not model.check_clean():
+    while model.total_steps == 0 or not model.check_clean():
+        print("Ejecutando paso del modelo...")  # Agregado este print
         model.step()
 
-    # Obtener el número total de pasos de simulación realizados
-    total_steps = model.schedule.steps
-
     print("La simulación ha terminado.")
-    print(f"Número total de pasos de simulación realizados: {total_steps}")
+    print(f"Número total de pasos de simulación realizados: {model.total_steps}")
+    
+    # Retornar el modelo y los datos
+    return model.total_steps, robotsData
 
 class Server(BaseHTTPRequestHandler):
-    robot_data = []
-    execAgent()
-          
-    def _set_response(self):
-        self.send_response(200)
+    total_steps = 0
+    robots_data = []
+
+    def _set_response(self, status_code=200):
+        self.send_response(status_code)
         self.send_header('Content-type', 'application/json')
         self.end_headers()
 
@@ -255,33 +249,40 @@ class Server(BaseHTTPRequestHandler):
             self.handle_not_found()
 
     def handle_steps(self):
-        #steps es un entero
-        steps = total_steps
+        steps = Server.total_steps
         stepCount = {
             "data": steps
         }
         self._set_response()
         self.wfile.write(json.dumps(stepCount).encode('utf-8'))
-        
+
     def handle_default(self, path):
         parts = path.split('/')
-        if len(parts) < 3 or not parts[2]:
+        if len(parts) < 3 or not parts[2].isdigit():
             self._set_response(400)
             response = {
                 "error": "Missing 'id' parameter in URL"
             }
+            self.wfile.write(json.dumps(response).encode('utf-8'))
         else:
-            id = parts[2]
-            datosSteps = robotsData
-            #[[5, 0, 0], [1, 0, 0], [0, 0, 1], [1, 0, 1], [-1, 0, 0]]
-            
-            position = {
-                "data": datosSteps[id]
+            id = int(parts[2])
+            if id >= len(Server.robots_data):
+                self._set_response(404)
+                response = {
+                    "error": "Step not found"
+                }
+                self.wfile.write(json.dumps(response).encode('utf-8'))
+                return
+
+            datosSteps = Server.robots_data[id]
+            # Formatear los datos en una lista de listas de coordenadas [x, y, z]
+            position_data = [[robot['x'], robot['y'], 0] for robot in datosSteps]
+
+            response = {
+                "data": position_data
             }
             self._set_response()
-            response = position
-        
-        self.wfile.write(json.dumps(response).encode('utf-8'))
+            self.wfile.write(json.dumps(response).encode('utf-8'))
 
     def handle_not_found(self):
         self._set_response(404)
@@ -295,6 +296,10 @@ def run(server_class=HTTPServer, handler_class=Server, port=8585):
     server_address = ('', port)
     httpd = server_class(server_address, handler_class)
     logging.info("Starting httpd...\n")
+    
+    # Ejecutar el agente y almacenar los resultados en las variables de clase del manejador
+    Server.total_steps, Server.robots_data = execAgent()
+
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
@@ -304,7 +309,7 @@ def run(server_class=HTTPServer, handler_class=Server, port=8585):
 
 if __name__ == '__main__':
     from sys import argv
-    
+
     if len(argv) == 2:
         run(port=int(argv[1]))
     else:
