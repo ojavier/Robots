@@ -789,7 +789,6 @@ GameObject:
   - component: {fileID: 7723362951761000040}
   - component: {fileID: 406703228994247442}
   - component: {fileID: 9103572084471458365}
-  - component: {fileID: -6554964813229572386}
   - component: {fileID: -1635495764806939680}
   m_Layer: 0
   m_Name: Robot
@@ -843,25 +842,12 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6734496040658306171}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4541b4627c513964fad37a98002c894f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   speed: 5
---- !u!114 &-6554964813229572386
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6734496040658306171}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4a97a24c26148204788f645f3e1e6d13, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  robotPrefab: {fileID: 6734496040658306171}
 --- !u!54 &-1635495764806939680
 Rigidbody:
   m_ObjectHideFlags: 0

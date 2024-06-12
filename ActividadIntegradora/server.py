@@ -1,6 +1,7 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import logging
 import json
+from urllib.parse import urlparse
 
 class Server(BaseHTTPRequestHandler):
     robot_data = []
@@ -11,30 +12,51 @@ class Server(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        # Return the latest robot data as JSON
-        self._set_response()
-        response = {
-            'time_step': 1,  # Example static time_step, update as necessary
-            'robots': Server.robot_data
+        parsed_path = urlparse(self.path)
+        path = parsed_path.path
+
+        if path == '/steps':
+            self.handle_steps()
+        elif path.startswith('/default/'):
+            self.handle_default(path)
+        else:
+            self.handle_not_found()
+
+    def handle_steps(self):
+        #steps es un entero
+        steps = 5
+        stepCount = {
+            "data": steps
         }
-        response_json = json.dumps(response)
-        logging.info("Sending JSON response: %s", response_json)
-        self.wfile.write(response_json.encode('utf-8'))
-
-    def do_POST(self):
-        content_length = int(self.headers['Content-Length'])
-        post_data = self.rfile.read(content_length)
-        logging.info("Received POST data: %s", post_data.decode('utf-8'))
-
-        try:
-            Server.robot_data = json.loads(post_data)
+        self._set_response()
+        self.wfile.write(json.dumps(stepCount).encode('utf-8'))
+        
+    def handle_default(self, path):
+        parts = path.split('/')
+        if len(parts) < 3 or not parts[2]:
+            self._set_response(400)
+            response = {
+                "error": "Missing 'id' parameter in URL"
+            }
+        else:
+            id = parts[2]
+            datosSteps = []
+            #[[5, 0, 0], [1, 0, 0], [0, 0, 1], [1, 0, 1], [-1, 0, 0]]
+            
+            position = {
+                "data": datosSteps[id]
+            }
             self._set_response()
-            self.wfile.write(json.dumps({'status': 'success'}).encode('utf-8'))
-        except json.JSONDecodeError as e:
-            logging.error("JSONDecodeError: %s", e)
-            self.send_response(400)
-            self.end_headers()
-            self.wfile.write(json.dumps({'status': 'error', 'message': str(e)}).encode('utf-8'))
+            response = position
+        
+        self.wfile.write(json.dumps(response).encode('utf-8'))
+
+    def handle_not_found(self):
+        self._set_response(404)
+        response = {
+            "error": "Not found"
+        }
+        self.wfile.write(json.dumps(response).encode('utf-8'))
 
 def run(server_class=HTTPServer, handler_class=Server, port=8585):
     logging.basicConfig(level=logging.INFO)

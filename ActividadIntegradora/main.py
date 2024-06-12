@@ -209,7 +209,7 @@ def read_workspace(file_path):
 
 
 # Ruta al archivo con espacio de configuración
-file_path = '../Robots/ActividadIntegradora/input1.txt'  # Cambia esto por la ruta real de tu archivo
+file_path = './input1.txt'  # Cambia esto por la ruta real de tu archivo
 
 # Leer espacio de configuración
 width, height, workspace = read_workspace(file_path)
