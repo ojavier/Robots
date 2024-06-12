@@ -5,11 +5,19 @@ using UnityEngine.Networking;
 public class Peticion : MonoBehaviour
 {
     [System.Serializable]
-    public class PositionData
+    public class RobotData
     {
+        public int id;
         public int x;
         public int y;
-        public int z;
+        public int movements;
+    }
+
+    [System.Serializable]
+    public class ServerData
+    {
+        public int time_step;
+        public RobotData[] robots;
     }
 
     private void Start()
@@ -27,21 +35,42 @@ public class Peticion : MonoBehaviour
             {
                 yield return www.SendWebRequest();
 
-                if (www.result == UnityWebRequest.Result.ConnectionError)
+                if (www.result == UnityWebRequest.Result.ConnectionError || www.result == UnityWebRequest.Result.ProtocolError)
                 {
                     Debug.LogError(www.error);
                 }
-                else if (www.result == UnityWebRequest.Result.ProtocolError)
-                {
-                    Debug.LogError("HTTP Error: " + www.error);
-                }
                 else
                 {
-                    Debug.Log("JSON received: " + www.downloadHandler.text); // Agrega este mensaje de depuración
+                    string jsonResponse = www.downloadHandler.text;
+                    Debug.Log("JSON received: " + jsonResponse);
+
                     try
                     {
-                        PositionData position = JsonUtility.FromJson<PositionData>(www.downloadHandler.text);
-                        Debug.Log("Position received: " + position.x + ", " + position.y + ", " + position.z);
+                        // First, check if the JSON is not empty
+                        if (!string.IsNullOrEmpty(jsonResponse))
+                        {
+                            // Try to parse the JSON
+                            ServerData data = JsonUtility.FromJson<ServerData>(jsonResponse);
+
+                            // Check if data and its fields are not null
+                            if (data != null && data.robots != null)
+                            {
+                                Debug.Log("Parsed data successfully.");
+                                // Iterate over the robots and log their data
+                                foreach (RobotData robot in data.robots)
+                                {
+                                    Debug.Log($"Robot {robot.id} at ({robot.x}, {robot.y}) with {robot.movements} movements");
+                                }
+                            }
+                            else
+                            {
+                                Debug.LogError("Parsed data or robots array is null.");
+                            }
+                        }
+                        else
+                        {
+                            Debug.LogError("Received empty JSON response.");
+                        }
                     }
                     catch (System.Exception e)
                     {
