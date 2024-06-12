@@ -8,6 +8,7 @@ import random
 import time
 import json
 
+robotsData = [];
 
 # Función para leer el archivo de configuración del espacio de trabajo
 class TrashAgent(Agent):
@@ -75,7 +76,12 @@ class OficinaModel(Model):
     def __init__(self, workspace_file):
         super().__init__()
         self.num_robots = 5  # Siempre habrá 5 robots
-        self.grid = None
+
+        # Leer configuración del espacio de trabajo desde el archivo
+        self.height, self.width, self.workspace = read_workspace(workspace_file)
+
+        # Crear el grid y otros componentes
+        self.grid = MultiGrid(self.width, self.height, True)
         self.schedule = RandomActivation(self)
         self.datacollector = DataCollector(
             {"Total Movements": lambda m: self.total_movements()}
@@ -83,9 +89,6 @@ class OficinaModel(Model):
         self.grid_history = []
         self.trash_bin_location = None
         self.trash_map = {}  # Diccionario para almacenar la cantidad de basura en cada celda
-
-        # Leer configuración del espacio de trabajo desde el archivo
-        self.height, self.width, self.workspace = read_workspace(workspace_file)
 
         agent_id = 0
         robot_count = 0  # Contador de robots creados
@@ -99,8 +102,6 @@ class OficinaModel(Model):
                         self.trash_map[(x, y)] = int(cell)
                         trash_agent = TrashAgent(agent_id, self)
                         self.schedule.add(trash_agent)
-                        if self.grid is None:
-                            self.grid = MultiGrid(self.width, self.height, True)
                         self.grid.place_agent(trash_agent, (x, y))
                         agent_id += 1
                     elif cell == 'P':
@@ -109,11 +110,10 @@ class OficinaModel(Model):
                         if robot_count < 5:
                             robot = RobotAgent(agent_id, self)
                             self.schedule.add(robot)
-                            if self.grid is None:
-                                self.grid = MultiGrid(self.width, self.height, True)
                             self.grid.place_agent(robot, (x, y))
                             agent_id += 1
                             robot_count += 1
+                            robot_positions.append((x, y))
                         else:
                             raise ValueError("More than 5 starting positions ('S') for robots.")
 
@@ -125,6 +125,7 @@ class OficinaModel(Model):
             robot = RobotAgent(agent_id, self)
             self.schedule.add(robot)
             empty_pos = self.find_empty()
+            print(empty_pos)
             if self.grid is None:
                 self.grid = MultiGrid(self.width, self.height, True)
             self.grid.place_agent(robot, empty_pos)
@@ -177,10 +178,8 @@ class OficinaModel(Model):
             'time_step': self.schedule.time,
             'robots': robot_data
         }
-        try:
-            requests.post("http://localhost:8585/update", json=data)
-        except requests.exceptions.RequestException as e:
-            print(f"Error sending data: {e}")
+        print(data)
+        robotsData.append(data.robots)
 
     def check_clean(self):
         for cell in self.grid.coord_iter():
@@ -209,7 +208,7 @@ def read_workspace(file_path):
 
 
 # Ruta al archivo con espacio de configuración
-file_path = './input1.txt'  # Cambia esto por la ruta real de tu archivo
+file_path = '../Robots/ActividadIntegradora/input1.txt'  # Cambia esto por la ruta real de tu archivo
 
 # Leer espacio de configuración
 width, height, workspace = read_workspace(file_path)
