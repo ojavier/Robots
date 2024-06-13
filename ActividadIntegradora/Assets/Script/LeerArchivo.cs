@@ -2,14 +2,17 @@ using System.IO;
 using UnityEngine;
 
 public class LeerArchivo : MonoBehaviour {
-    public string fileName = "input1.txt";  // Solo el nombre del archivo, sin ruta
+
+    // Definir variables y objetos
+    public string fileName = "input1.txt";
     public char[,] officeMap;
     public int width;
     public int height;
     public Vector3 binPosition;
 
+    // Este método es llamado al iniciar el programa, verificando que la ruta sea la correcta para leer el documento
     void Start() {
-        string filePath = Path.Combine(Application.dataPath, fileName); // Obtiene la ruta completa al archivo
+        string filePath = Path.Combine(Application.dataPath, fileName);
         if (File.Exists(filePath)) {
             Leer(filePath);
         } else {
@@ -17,6 +20,7 @@ public class LeerArchivo : MonoBehaviour {
         }
     }
 
+    // Lee el archivo y lo parsea para mandarlo a un arreglo "officeMap" para poder usarlo póximamente 
     void Leer(string filePath) {
         string[] lines = File.ReadAllLines(filePath);
         string[] dimensions = lines[0].Split(' ');

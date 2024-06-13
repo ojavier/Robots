@@ -2,25 +2,23 @@ using UnityEngine;
 
 public class RobotMovement : MonoBehaviour
 {
+    // Definir variable y arreglo
     public float speed = 5f;
     private Vector3 targetPosition;
 
+    // Este método es llamado al iniciar el programa
     void Start()
     {
         targetPosition = transform.position;
     }
 
+    // Este método es llamado varias veces y define el movimiento hacia la posición deseada
     void Update()
     {
-        // Movimiento hacia la posición objetivo
         if (Vector3.Distance(transform.position, targetPosition) > 0.1f)
         {
             transform.position = Vector3.MoveTowards(transform.position, targetPosition, speed * Time.deltaTime);
         }
-
-        // Lógica para actualizar targetPosition
-        // Aquí puedes agregar la lógica para cambiar la posición objetivo
-        // Ejemplo: targetPosition = new Vector3(5, 0, 5);
     }
 
     // Método para cambiar la posición objetivo

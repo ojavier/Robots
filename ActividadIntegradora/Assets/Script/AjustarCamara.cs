@@ -2,9 +2,11 @@ using UnityEngine;
 
 public class AjustarCamara : MonoBehaviour
 {
+    // Definición de objetos
     public Tablero tablero;
     public Camera camara;
 
+    /// Este método es llamado al iniciar el programa y verificq que los valores han sido asignados a los objetos
     void Start()
     {
         if (tablero == null)
@@ -28,26 +30,23 @@ public class AjustarCamara : MonoBehaviour
         AjustarVista();
     }
 
+    // Ajusta la vista según las dimenciones del tablero, desde posición y rotación
     void AjustarVista()
     {
-        // Dimensiones del tablero
         int width = tablero.mapLoader.width;
         int height = tablero.mapLoader.height;
 
-        // Calcular el centro del tablero
         Vector3 centroTablero = new Vector3((width - 1) * 1.5f, 0, -(height - 1) * 1.5f);
 
-        // Ajustar la posición de la cámara
         float maxDimension = Mathf.Max(width, height);
-        float alturaCamara = maxDimension * 1.5f; // Ajustar este valor según sea necesario
+        float alturaCamara = maxDimension * 1.5f;
 
         camara.transform.position = new Vector3(centroTablero.x, alturaCamara, centroTablero.z);
-        camara.transform.rotation = Quaternion.Euler(90, 0, 0); // Apuntar la cámara directamente hacia abajo
+        camara.transform.rotation = Quaternion.Euler(90, 0, 0);
 
-        // Ajustar el tamaño de la cámara
         if (camara.orthographic)
         {
-            camara.orthographicSize = maxDimension * 1.5f; // Ajustar el tamaño para cubrir todo el tablero
+            camara.orthographicSize = maxDimension * 1.5f;
         }
     }
 }
