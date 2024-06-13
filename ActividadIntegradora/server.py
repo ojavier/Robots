@@ -49,22 +49,22 @@ class RobotAgent(Agent):
         if self.pos == self.trash_bin_location:
             self.current_trash = 0
 
-def move(self):
-    # Obtener vecinos válidos
-    possible_steps = self.model.grid.get_neighborhood(self.pos, moore=True, include_center=False)
-    possible_steps = [step for step in possible_steps if not any(isinstance(obj, str) and obj == 'X' for obj in self.model.grid.get_cell_list_contents([step]))]
+    def move(self):
+        # Obtener vecinos válidos
+        possible_steps = self.model.grid.get_neighborhood(self.pos, moore=True, include_center=False)
+        possible_steps = [step for step in possible_steps if not any(isinstance(obj, str) and obj == 'X' for obj in self.model.grid.get_cell_list_contents([step]))]
 
-    # Si hay vecinos disponibles
-    if possible_steps:
-        # Ordenar los vecinos según la cantidad de basura y la distancia al contenedor de basura
-        possible_steps.sort(key=lambda step: (sum(isinstance(obj, TrashAgent) for obj in self.model.grid.get_cell_list_contents([step])), self.model.grid.get_distance(step, self.trash_bin_location)))
-        
-        # Elegir el vecino con más basura y más cercano al contenedor de basura
-        new_position = possible_steps[-1]
-        
-        # Mover el agente a la nueva posición
-        self.model.grid.move_agent(self, new_position)
-        self.movements += 1
+        # Si hay vecinos disponibles
+        if possible_steps:
+            # Ordenar los vecinos según la cantidad de basura y la distancia al contenedor de basura
+            possible_steps.sort(key=lambda step: (sum(isinstance(obj, TrashAgent) for obj in self.model.grid.get_cell_list_contents([step])), self.model.grid.get_distance(step, self.trash_bin_location)))
+            
+            # Elegir el vecino con más basura y más cercano al contenedor de basura
+            new_position = possible_steps[-1]
+            
+            # Mover el agente a la nueva posición
+            self.model.grid.move_agent(self, new_position)
+            self.movements += 1
 
 
     def move_towards(self, destination):
