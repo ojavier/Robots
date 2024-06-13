@@ -25,7 +25,7 @@ class RobotAgent(Agent):
         self.trash_capacity = trash_capacity
         self.current_trash = 0
         self.trash_bin_location = None
-        self.movements = 0  # Agregar esta línea para inicializar el atributo movements
+        self.movements = 0  # Inicializar el atributo movements
 
     def step(self):
         self.collect_trash()  # Recolectar basura en cada paso
@@ -49,13 +49,23 @@ class RobotAgent(Agent):
         if self.pos == self.trash_bin_location:
             self.current_trash = 0
 
-    def move(self):
-        possible_steps = self.model.grid.get_neighborhood(self.pos, moore=True, include_center=False)
-        possible_steps = [step for step in possible_steps if not any(isinstance(obj, str) and obj == 'X' for obj in self.model.grid.get_cell_list_contents([step]))]
-        if possible_steps:
-            new_position = random.choice(possible_steps)
-            self.model.grid.move_agent(self, new_position)
-            self.movements += 1
+def move(self):
+    # Obtener vecinos válidos
+    possible_steps = self.model.grid.get_neighborhood(self.pos, moore=True, include_center=False)
+    possible_steps = [step for step in possible_steps if not any(isinstance(obj, str) and obj == 'X' for obj in self.model.grid.get_cell_list_contents([step]))]
+
+    # Si hay vecinos disponibles
+    if possible_steps:
+        # Ordenar los vecinos según la cantidad de basura y la distancia al contenedor de basura
+        possible_steps.sort(key=lambda step: (sum(isinstance(obj, TrashAgent) for obj in self.model.grid.get_cell_list_contents([step])), self.model.grid.get_distance(step, self.trash_bin_location)))
+        
+        # Elegir el vecino con más basura y más cercano al contenedor de basura
+        new_position = possible_steps[-1]
+        
+        # Mover el agente a la nueva posición
+        self.model.grid.move_agent(self, new_position)
+        self.movements += 1
+
 
     def move_towards(self, destination):
         if destination is None:
@@ -132,7 +142,7 @@ class OficinaModel(Model):
             agent_id += 1
 
     def step(self):
-        print("Ejecutando paso del modelo...")  # Agregado este print
+        print("Ejecutando paso del modelo...")
         self.schedule.step()
         self.record_grid()
         self.datacollector.collect(self)
@@ -146,7 +156,7 @@ class OficinaModel(Model):
         }
         print(data)
         robotsData.append(data['robots'])
-        print(f"Número total de pasos de simulación realizados: {self.total_steps}")  # Agregado este print
+        print(f"Número total de pasos de simulación realizados: {self.total_steps}")
 
     def collect_robot_data(self):
         robot_data = []
@@ -163,7 +173,7 @@ class OficinaModel(Model):
     def find_empty(self):
         empty_cells = list(self.grid.empties)
         if not empty_cells:
-            raise ValueError("No empty positions available in the grid.")
+            raise ValueError("No hay posiciones vacías disponibles en la malla.")
         return random.choice(empty_cells)
     
     def check_clean(self):
@@ -205,7 +215,7 @@ def read_workspace(file_path):
         for i in range(1, n + 1):
             row = lines[i].strip().split()
             for j in range(len(row)):
-                trash_map[(j, i - 1)] = row[j]  # Asegúrate de que las coordenadas sean correctas
+                trash_map[(j, i - 1)] = row[j] 
         return n, m, trash_map
 
 def execAgent():
@@ -219,7 +229,7 @@ def execAgent():
 
     # Ejecutar el modelo hasta que esté limpio
     while model.total_steps == 0 or not model.check_clean():
-        print("Ejecutando paso del modelo...")  # Agregado este print
+        print("Ejecutando paso del modelo...")
         model.step()
 
     print("La simulación ha terminado.")

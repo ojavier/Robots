@@ -22,7 +22,6 @@ public class WebClient : MonoBehaviour
         if (www.result == UnityWebRequest.Result.Success)
         {
             Debug.Log("Response: " + www.downloadHandler.text);
-            // Puedes deserializar la respuesta JSON aquí si es necesario
         }
         else
         {
